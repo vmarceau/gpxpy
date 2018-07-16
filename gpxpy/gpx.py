@@ -45,7 +45,7 @@ DATE_FORMATS = [
 SMOOTHING_RATIO = (0.4, 0.2, 0.4)
 
 # When computing stopped time -- this is the minimum speed between two points,
-# if speed is less than this value -- we'll assume it is zero
+# if speed is less than this value -- we'll assume it is zero. Value in is km/h.
 DEFAULT_STOPPED_SPEED_THRESHOLD = 1
 
 # Fields used for all point elements (route point, track point, waypoint):
@@ -776,6 +776,8 @@ class GPXTrackSegment:
         if not stopped_speed_threshold:
             stopped_speed_threshold = DEFAULT_STOPPED_SPEED_THRESHOLD
 
+        stopped_speed_threshold_ms = stopped_speed_threshold * 1000 / 3600
+
         moving_time = 0.
         stopped_time = 0.
 
@@ -794,28 +796,26 @@ class GPXTrackSegment:
             # points:
             if point.time and previous.time:
                 timedelta = point.time - previous.time
+                seconds = mod_utils.total_seconds(timedelta)
 
                 if point.elevation and previous.elevation:
                     distance = point.distance_3d(previous)
                 else:
                     distance = point.distance_2d(previous)
 
-                seconds = mod_utils.total_seconds(timedelta)
-                speed_kmh = 0
+                speed_ms = 0
                 if seconds > 0:
-                    # TODO: compute treshold in m/s instead this to kmh every time:
-                    speed_kmh = (distance / 1000.) / (mod_utils.total_seconds(timedelta) / 60. ** 2)
+                    speed_ms = distance / seconds
 
-                #print speed, stopped_speed_threshold
-                if speed_kmh <= stopped_speed_threshold:
-                    stopped_time += mod_utils.total_seconds(timedelta)
+                if speed_ms <= stopped_speed_threshold_ms:
+                    stopped_time += seconds
                     stopped_distance += distance
                 else:
-                    moving_time += mod_utils.total_seconds(timedelta)
+                    moving_time += seconds
                     moving_distance += distance
 
                     if distance and moving_time:
-                        speeds_and_distances.append((distance / mod_utils.total_seconds(timedelta), distance, ))
+                        speeds_and_distances.append((distance / seconds, distance, ))
 
         max_speed = None
         if speeds_and_distances:
