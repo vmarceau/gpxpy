@@ -776,7 +776,7 @@ class GPXTrackSegment:
         if not stopped_speed_threshold:
             stopped_speed_threshold = DEFAULT_STOPPED_SPEED_THRESHOLD
 
-        stopped_speed_threshold_ms = stopped_speed_threshold * 1000 / 3600
+        stopped_speed_threshold_ms = stopped_speed_threshold * 1000. / 3600.
 
         moving_time = 0.
         stopped_time = 0.
